@@ -211,7 +211,6 @@ class OpenAIServingChat(OpenAIServing):
         try:
             conversation: List[ConversationMessage] = []
             image_futures: List[Awaitable[ImagePixelData]] = []
-            print("==================create chat completion====================")
             
             for msg in request.messages:
                 chat_parsed_result = self._parse_chat_message_content(msg)
@@ -413,9 +412,7 @@ class OpenAIServingChat(OpenAIServing):
                         else:
                             logprobs = None
 
-                        delta_text = output.text[len(previous_texts[i]):]
-                        print(f"======output text: {output.text}\n")
-                        print(f"======delta text: {delta_text}\n")    
+                        delta_text = output.text[len(previous_texts[i]):] 
                         previous_texts[i] = output.text
                         previous_num_tokens[i] = len(output.token_ids)
 
@@ -432,7 +429,6 @@ class OpenAIServingChat(OpenAIServing):
                             function_output = postprocess_output(output_str=content)
                             tool_calls = []
                             if function_output:
-                                print(f"Parsed function output: {function_output}\n\n")
                                 try:
                                     for fc in function_output:
                                         function = FunctionCall(name=fc["function"]["name"], arguments=fc["function"]["arguments"])
@@ -474,18 +470,16 @@ class OpenAIServingChat(OpenAIServing):
                                 logprobs=logprobs,
                                 finish_reason=output.finish_reason,
                                 stop_reason=output.stop_reason)
-                            print(f"CHOICE DATA : {choice_data}")
                             chunk = ChatCompletionStreamResponse(
                                 id=request_id,
                                 object=chunk_object_type,
                                 created=created_time,
                                 choices=[choice_data],
                                 model=model_name)
-                            print(f"CHUNK DATA : {chunk}")
                             if (request.stream_options
                                     and request.stream_options.include_usage):
                                 chunk.usage = None
-                            data = chunk.model_dump_json(exclude_unset=True)
+                            data = chunk.model_dump_json(exclude_unset=False)
                             yield f"data: {data}\n\n"
                             finish_reason_sent[i] = True
 
@@ -569,7 +563,7 @@ class OpenAIServingChat(OpenAIServing):
                 function_output = postprocess_output(output_str=content)
                 tool_calls = []
                 if function_output:
-                    print(f"Parsed function output: {function_output}\n\n")
+
                     try:
                         for fc in function_output:
                             function = FunctionCall(name=fc["function"]["name"], arguments=fc["function"]["arguments"])
